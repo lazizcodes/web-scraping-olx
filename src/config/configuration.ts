@@ -17,5 +17,9 @@ export default () => {
       password: DB_PASSWORD,
       uri: `mongodb://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?authSource=${DB_AUTH_SOURCE}`,
     },
+    pagination: {
+      defaultPage: 1,
+      defaultSize: process.env.DEFAULT_PAGE_SIZE || 10,
+    },
   };
 };

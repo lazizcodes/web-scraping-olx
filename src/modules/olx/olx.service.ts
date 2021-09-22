@@ -4,13 +4,14 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { Olx } from './olx.entity';
-import { resourceUsage } from 'process';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class OlxService {
   constructor(
     @InjectRepository(Olx)
     private readonly olxRepository: MongoRepository<Olx>,
+    private readonly config: ConfigService,
   ) {}
   private readonly logger = new Logger(OlxService.name);
 
@@ -80,7 +81,6 @@ export class OlxService {
       await this.olxRepository.bulkWrite(operations, { ordered: false });
     } catch (error) {}
 
-    // console.log(ads);
     await browser.close();
   }
 
@@ -89,7 +89,10 @@ export class OlxService {
     return ad || new NotFoundException('Could not find ad.');
   }
 
-  async getAllAds(page: number, pageSize: number) {
+  async getAllAds(
+    page: number = this.config.get('pagination.defaultPage'),
+    pageSize: number = this.config.get('pagination.defaultSize'),
+  ) {
     const skip = (page - 1) * pageSize;
     const take = pageSize;
     const ads = await this.olxRepository.find({ skip, take });
