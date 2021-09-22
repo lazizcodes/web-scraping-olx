@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  web:
+    container_name: scraping-web
+    restart: always
+    build: .
+    env_file: .env
+    environment:
+      DB_HOST: db
+    ports:
+      - '3000:3000'
+    links:
+      - db
+    depends_on:
+      - db
+  db:
+    container_name: mongodb
+    image: mongo:3.7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - '${DB_PORT}:27017'
+    volumes:
+      - shared_database:/data/db
+volumes:
+  shared_database:
