@@ -1,9 +1,10 @@
 import puppeteer from 'puppeteer';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { Olx } from './olx.entity';
+import { resourceUsage } from 'process';
 
 @Injectable()
 export class OlxService {
@@ -47,7 +48,7 @@ export class OlxService {
 
           return [
             {
-              id,
+              _id: id,
               title,
               price,
               imgUrl,
@@ -81,5 +82,17 @@ export class OlxService {
 
     // console.log(ads);
     await browser.close();
+  }
+
+  async getAd(id: string) {
+    const ad = await this.olxRepository.findOne({ _id: id });
+    return ad || new NotFoundException('Could not find ad.');
+  }
+
+  async getAllAds(page: number, pageSize: number) {
+    const skip = (page - 1) * pageSize;
+    const take = pageSize;
+    const ads = await this.olxRepository.find({ skip, take });
+    return ads;
   }
 }

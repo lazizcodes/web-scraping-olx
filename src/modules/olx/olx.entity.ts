@@ -4,7 +4,7 @@ import { Entity, Column, PrimaryColumn } from 'typeorm';
 @Entity({ name: 'olx' })
 export class Olx {
   @PrimaryColumn()
-  id: String;
+  _id: String;
 
   @Column()
   title: String;
