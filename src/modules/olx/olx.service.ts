@@ -2,18 +2,18 @@ import puppeteer from 'puppeteer';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MongoRepository, Repository } from 'typeorm';
+import { MongoRepository } from 'typeorm';
 import { Olx } from './olx.entity';
 
 @Injectable()
 export class OlxService {
   constructor(
     @InjectRepository(Olx)
-    private readonly olxRepository: Repository<Olx>,
+    private readonly olxRepository: MongoRepository<Olx>,
   ) {}
   private readonly logger = new Logger(OlxService.name);
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async handleCron() {
     this.logger.log('OLX Cron started...');
     const extractData = async (url) => {
@@ -60,8 +60,6 @@ export class OlxService {
       });
       await page.close();
 
-      // const pageNumber = Number(url.match(/page=(\d+)/)[1]);
-
       const pageNumber = Number(new URL(url).searchParams.get('page'));
       if (pageNumber < 25) {
         const nextUrl = `https://www.olx.ua/list/?page=${pageNumber + 1}`;
@@ -77,14 +75,11 @@ export class OlxService {
 
     const ads = await extractData(firstUrl);
     const operations = ads.map((ad) => ({ insertOne: { document: ad } }));
+    try {
+      await this.olxRepository.bulkWrite(operations, { ordered: false });
+    } catch (error) {}
 
-    // await this.olxRepository.bulkWrite(operations, { ordered: false });
-
-    await this.olxRepository.query(
-      `INSERT IGNORE INTO olx (id, title, price, imgUrl, location, adCreatedAt, createdAt) ?`,
-      [ads],
-    );
-    console.log(ads);
+    // console.log(ads);
     await browser.close();
   }
 }

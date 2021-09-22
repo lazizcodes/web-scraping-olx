@@ -1,23 +1,32 @@
 import { Module } from '@nestjs/common';
+import { ConfigService, ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ScheduleModule } from '@nestjs/schedule';
-// import { OlxService } from './modules/olx/olx.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 import { OlxModule } from './modules/olx/olx.module';
+import configuration from './config/configuration';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      load: [configuration],
+      isGlobal: true,
+      cache: true,
+    }),
     ScheduleModule.forRoot(),
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: '',
-      database: 'olx',
-      entities: [join(__dirname, '**/**.entity{.ts,.js}')],
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => {
+        return {
+          type: 'mongodb',
+          url: config.get('mongo.uri'),
+          entities: [join(__dirname, '**/**.entity{.ts,.js}')],
+          useNewUrlParser: true,
+          logging: true,
+        };
+      },
     }),
     OlxModule,
   ],
